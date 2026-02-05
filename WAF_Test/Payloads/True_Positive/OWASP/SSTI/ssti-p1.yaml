@@ -1,0 +1,45 @@
+id: ssti-p1
+
+info:
+  name: Server-Side Template Injection
+  author: custom
+  severity: high
+  description: SSTI payloads for various template engines (Jinja2, Twig, ERB, etc.)
+  tags: ssti,template-injection,waf-bypass
+
+http:
+  - raw:
+      - |
+        GET /{{path}}?input={{payload}} HTTP/1.1
+        Host: {{Hostname}}
+        
+      - |
+        POST /{{path}} HTTP/1.1
+        Host: {{Hostname}}
+        Content-Type: application/x-www-form-urlencoded
+        
+        input={{payload}}
+
+    payloads:
+      payload:
+        - "{{7*7}}"
+        - "${7*7}"
+        - "<%= 7*7 %>"
+        - "#{7*7}"
+        - "*{7*7}"
+      path:
+        - "template"
+        - "render"
+        - "preview"
+
+    matchers-condition: or
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "49"
+        condition: and
+        
+      - type: status
+        status:
+          - 200

