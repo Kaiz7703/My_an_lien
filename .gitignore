@@ -1,2 +1,2 @@
-WAF_Test/Payloads/False_Positive
+WAF_Test/Payloads/False_Positive/*.json
 !WAF_Test/Payloads/False_Positive/browsing_4chef.json
